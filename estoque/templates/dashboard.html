@@ -1,193 +1,181 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard - Sistema de Estoque</title>
+    <title>Dashboard - Sistema de Estoque Assaí</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
+            min-height: 100vh;
+            background: #4834d4;
             padding: 20px;
-            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #e0e0e0;
+            padding: 1rem;
+            border-radius: 50px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .back-button {
+            position: absolute;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .add-button {
+            position: absolute;
+            right: 20px;
+            background: #4834d4;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            line-height: 1;
+        }
+        .add-button:hover {
+            background-color: #3c2db3;
+        }
+        .logo {
+            width: 120px;
+            margin: 0 auto;
+        }
+        .dashboard-title {
+            background-color: #e0e0e0;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #333;
+            font-size: 1.5rem;
         }
         .container {
-            max-width: 1200px;
+            background-color: #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
             margin: 0 auto;
-            background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-        .nav-bar {
-            background-color: #343a40;
-            padding: 1rem;
-            margin-bottom: 2rem;
-        }
-        .nav-bar a {
-            color: white;
-            text-decoration: none;
-            margin-right: 1rem;
-        }
-        .nav-bar a:hover {
-            color: #ddd;
-        }
-        .logout {
-            float: right;
-        }
-        .actions {
-            margin-bottom: 1rem;
-            text-align: right;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            text-decoration: none;
-            display: inline-block;
-            margin-left: 0.5rem;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-success {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-        .btn:hover {
-            opacity: 0.9;
         }
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            background-color: white;
-        }
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 1.5rem;
         }
         th {
-            background-color: #f8f9fa;
+            background-color: #e0e0e0;
+            color: #333;
             font-weight: bold;
-            color: #495057;
+            text-align: center;
+            padding: 1rem;
+            border-bottom: 2px solid #ccc;
         }
-        tr:hover {
-            background-color: #f8f9fa;
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #ccc;
+            color: #333;
+            text-align: center;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .edit-button {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .edit-button:hover {
+            color: #2107e7;
+        }
+        .edit-icon {
+            width: 16px;
+            height: 16px;
+        }
+        .export-button {
+            display: block;
+            width: 200px;
+            padding: 1rem;
+            background-color: #4834d4;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 1.5rem auto 0;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .export-button:hover {
+            background-color: #3c2db3;
         }
         .empty-message {
             text-align: center;
             padding: 2rem;
-            color: #6c757d;
-        }
-        .search-box {
-            margin-bottom: 1rem;
-            display: flex;
-            gap: 1rem;
-        }
-        .search-box input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        .table-responsive {
-            overflow-x: auto;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="nav-bar">
-        <a href="{% url 'cadastrar_produto' %}">Cadastrar Produto</a>
-        {% if user.tipo_usuario == 'G' %}
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-            <a href="{% url 'registrar_usuario' %}">Registrar Usuário</a>
-        {% endif %}
-        <a href="{% url 'logout' %}" class="logout">Sair</a>
+    <div class="header">
+        <a href="{% url 'logout' %}" class="back-button">←</a>
+        <img src="{% static 'estoque/images/assai_logo.png' %}" alt="Logo Assaí" class="logo">
+        <a href="{% url 'cadastrar_produto' %}" class="add-button" title="Adicionar Produto">+</a>
+    </div>
+
+    <div style="text-align: center;">
+        <h2 class="dashboard-title">Dashboard</h2>
     </div>
 
     <div class="container">
-        <h2>Dashboard de Estoque</h2>
-        
-        <div class="actions">
-            <a href="{% url 'exportar_estoque' %}" class="btn btn-success">
-                Exportar Estoque
-            </a>
-        </div>
-
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Buscar produto..." onkeyup="filterTable()">
-        </div>
-
-        <div class="table-responsive">
-            <table id="productTable">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nome do Produto</th>
-                        <th>Quantidade</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if produtos %}
-                        {% for produto in produtos %}
-                            <tr>
-                                <td>{{ produto.codigo }}</td>
-                                <td>{{ produto.nome }}</td>
-                                <td>{{ produto.quantidade }}</td>
-                                <td>
-                                    <a href="{% url 'editar_produto' produto.pk %}" class="btn btn-warning">Editar</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quant. estoque</th>
+                    <th>Gerenciamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if produtos %}
+                    {% for produto in produtos %}
                         <tr>
-                            <td colspan="4" class="empty-message">Nenhum produto cadastrado.</td>
+                            <td>{{ produto.nome }}</td>
+                            <td>{{ produto.quantidade }}</td>
+                            <td>
+                                <a href="{% url 'editar_produto' produto.pk %}" class="edit-button">Editar</a>
+                            </td>
                         </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="empty-message">Nenhum produto cadastrado.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <a href="{% url 'exportar_estoque' %}" class="export-button">Exportar</a>
     </div>
-
-    <script>
-        function filterTable() {
-            var input = document.getElementById("searchInput");
-            var filter = input.value.toLowerCase();
-            var table = document.getElementById("productTable");
-            var tr = table.getElementsByTagName("tr");
-
-            for (var i = 1; i < tr.length; i++) {
-                var td = tr[i].getElementsByTagName("td");
-                var found = false;
-                
-                for (var j = 0; j < td.length; j++) {
-                    var cell = td[j];
-                    if (cell) {
-                        var text = cell.textContent || cell.innerText;
-                        if (text.toLowerCase().indexOf(filter) > -1) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                
-                tr[i].style.display = found ? "" : "none";
-            }
-        }
-    </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
 from .models import Produto, Usuario
 from .forms import ProdutoForm, UsuarioForm
 import pandas as pd
@@ -50,7 +51,17 @@ def cadastrar_produto(request):
     if request.method == 'POST':
         form = ProdutoForm(request.POST)
         if form.is_valid():
-            form.save()
+            # Salva o novo registro do produto
+            novo_produto = form.save()
+            
+            # Atualiza a quantidade total no dashboard
+            produtos_mesmo_codigo = Produto.objects.filter(codigo=novo_produto.codigo)
+            quantidade_total = sum(p.quantidade for p in produtos_mesmo_codigo)
+            
+            messages.success(
+                request, 
+                f'Produto registrado com sucesso! Quantidade total em estoque: {quantidade_total}'
+            )
             return redirect('cadastrar_produto')
     else:
         form = ProdutoForm()
@@ -60,50 +71,93 @@ def cadastrar_produto(request):
 def dashboard(request):
     if request.user.tipo_usuario != 'G':
         return redirect('login')
-    produtos = Produto.objects.all()
+    
+    # Agrupa produtos pelo código e soma as quantidades
+    produtos_agrupados = {}
+    for produto in Produto.objects.all():
+        if produto.codigo not in produtos_agrupados:
+            produtos_agrupados[produto.codigo] = {
+                'nome': produto.nome,
+                'quantidade': produto.quantidade,
+                'pk': produto.pk
+            }
+        else:
+            produtos_agrupados[produto.codigo]['quantidade'] += produto.quantidade
+    
+    # Converte o dicionário em lista para o template
+    produtos = [
+        {
+            'nome': info['nome'],
+            'quantidade': info['quantidade'],
+            'pk': info['pk']
+        }
+        for info in produtos_agrupados.values()
+    ]
+    
     return render(request, 'dashboard.html', {'produtos': produtos})
 
 @login_required
 @user_passes_test(is_gerente, login_url='login')
 def editar_produto(request, pk):
-    produto = get_object_or_404(Produto, pk=pk)
+    produto_referencia = get_object_or_404(Produto, pk=pk)
+    
+    # Obtém todos os registros do mesmo produto e calcula o total
+    produtos_mesmo_codigo = Produto.objects.filter(codigo=produto_referencia.codigo)
+    quantidade_total = sum(p.quantidade for p in produtos_mesmo_codigo)
     
     if request.method == 'POST':
-        # Pegar apenas a quantidade do POST
         quantidade = request.POST.get('quantidade')
         if quantidade is not None:
             try:
-                quantidade = int(quantidade)
-                if quantidade >= 0:
-                    produto.quantidade = quantidade
-                    produto.save()
+                nova_quantidade = int(quantidade)
+                if nova_quantidade >= 0:
+                    # Calcula a diferença entre a nova quantidade e o total atual
+                    diferenca = nova_quantidade - quantidade_total
+                    
+                    # Atualiza o registro mais recente com a diferença
+                    ultimo_registro = produtos_mesmo_codigo.latest('id')
+                    ultimo_registro.quantidade += diferenca
+                    ultimo_registro.save()
+                    
+                    messages.success(request, f'Quantidade atualizada com sucesso para {nova_quantidade}')
                     return redirect('dashboard')
                 else:
-                    return render(request, 'editar_produto.html', {
-                        'produto': produto,
-                        'error': 'A quantidade não pode ser negativa'
-                    })
+                    messages.error(request, 'A quantidade não pode ser negativa')
             except ValueError:
-                return render(request, 'editar_produto.html', {
-                    'produto': produto,
-                    'error': 'A quantidade deve ser um número válido'
-                })
+                messages.error(request, 'A quantidade deve ser um número válido')
     
-    return render(request, 'editar_produto.html', {'produto': produto})
+    # Passa o produto de referência e a quantidade total para o template
+    return render(request, 'editar_produto.html', {
+        'produto': produto_referencia,
+        'quantidade_total': quantidade_total
+    })
 
 @login_required
 @user_passes_test(is_gerente, login_url='login')
 def exportar_estoque(request):
-    produtos = Produto.objects.all().order_by('nome')
+    # Agrupa produtos pelo código
+    produtos_agrupados = {}
+    for produto in Produto.objects.all():
+        if produto.codigo not in produtos_agrupados:
+            produtos_agrupados[produto.codigo] = {
+                'codigo': produto.codigo,
+                'nome': produto.nome,
+                'notas_fiscais': [produto.nota_fiscal],
+                'quantidade': produto.quantidade
+            }
+        else:
+            produtos_agrupados[produto.codigo]['notas_fiscais'].append(produto.nota_fiscal)
+            produtos_agrupados[produto.codigo]['quantidade'] += produto.quantidade
     
-    # Criar o DataFrame com os dados dos produtos
+    # Criar o DataFrame com os dados agrupados
     data = {
-        'Código': [produto.codigo for produto in produtos],
-        'Nome do Produto': [produto.nome for produto in produtos],
-        'Nota Fiscal': [produto.nota_fiscal for produto in produtos],
-        'Quantidade em Estoque': [produto.quantidade for produto in produtos]
+        'Código': [info['codigo'] for info in produtos_agrupados.values()],
+        'Nome do Produto': [info['nome'] for info in produtos_agrupados.values()],
+        'Notas Fiscais': [', '.join(info['notas_fiscais']) for info in produtos_agrupados.values()],
+        'Quantidade em Estoque': [info['quantidade'] for info in produtos_agrupados.values()]
     }
     df = pd.DataFrame(data)
+    df = df.sort_values('Nome do Produto')
     
     # Configurar a resposta HTTP com o arquivo Excel
     response = HttpResponse(

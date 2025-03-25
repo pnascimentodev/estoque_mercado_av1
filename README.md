@@ -15,8 +15,8 @@ Este projeto foi desenvolvido como parte da disciplina de Engenharia de Software
 ## Requisitos
 - Python 3.x
 - Django
-- pandas
-- openpyxl
+- Pandas
+- Openpyxl
 
 ## Instalação
 
@@ -85,3 +85,14 @@ Este projeto foi desenvolvido com foco na solução de um problema real de gest�
 
 ---
 Desenvolvido para a disciplina de Engenharia de Software - Uninassau
+
+Alunos:
+- Priscila Nascimento
+- Pedro Barbosa
+- Rayane Mariano
+- Henrique Mendes
+- Aline Dayane
+- Nicolas César
+- Adison Alves Barbosa
+- Sergio Gabriel
+- Samuel Victor 

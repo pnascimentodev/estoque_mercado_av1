@@ -41,7 +41,7 @@ class Usuario(AbstractUser):
         return self.username
 
 class Produto(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=50)
     nome = models.CharField(max_length=100)
     nota_fiscal = models.CharField(max_length=50)
     quantidade = models.IntegerField(default=0)
